@@ -1,0 +1,130 @@
+---
+title: "exploration"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+library(zoo)
+```
+
+```{r}
+#We import the data output by scraper.ipynb
+D <- read_csv('tsa_volumes.csv')
+```
+
+```{r}
+#We calculate a weekly rolling maximum
+D_roll <- D |> 
+  mutate(
+    date = mdy(date)
+  ) |> 
+  arrange(date) |> 
+  mutate(
+    weekly_max = rollapply(number, width = 7, FUN = max, fill = NA, align = "right")
+  )
+```
+
+```{r}
+#We plot the data as a time series
+D_roll |> 
+  ggplot(aes(x = date, y = weekly_max)) +
+    geom_line(aes(color = "red")) +
+    labs(x = "Date",
+         y = "Passengers Screened",
+         title = "Air travel is at an all-time high",
+         subtitle="On June 23, the TSA set a new record for total passengers screened in a day. Data shown is a weekly rolling maximum.") +
+    theme_minimal() +
+    guides(color = "none", alpha = "none")
+```
+
+```{r}
+#We export the data for a production graphic
+D_roll |> write_csv('tsa_volumes_rolled.csv')
+```
+
+## Scratch work (ignore)
+
+```{r}
+plot_data <- D %>%
+  mutate(
+    date = mdy(date),
+    year = year(date),
+    day_of_year = yday(date)
+  ) %>%
+  arrange(date)
+
+ggplot(plot_data, aes(x = day_of_year, y = number, color = factor(year), group = year)) +
+  geom_line() +
+  scale_x_continuous(breaks = seq(1, 366, by = 30.5),
+                     labels = month.abb) +
+  labs(x = "Month", y = "Number", color = "Year") +
+  theme_minimal()
+```
+
+```{r}
+plot_data <- D %>%
+  mutate(
+    date = mdy(date),
+    year = year(date),
+    day_of_year = yday(date)
+  ) %>%
+  arrange(date)
+
+current_year <- 2024
+
+ggplot(plot_data, aes(x = day_of_year, y = number, group = year)) +
+  geom_line(aes(color = year == current_year, alpha = year == current_year)) +
+  scale_color_manual(values = c("TRUE" = "red", "FALSE" = "grey")) +
+  scale_alpha_manual(values = c("TRUE" = 0.5, "FALSE" = 0.5)) +
+  scale_x_continuous(breaks = seq(1, 366, by = 30.5),
+                     labels = month.abb) +
+  labs(x = "Month", y = "Passengers Screened", title="Record Air Travel", notes="hi") +
+  theme_minimal() +
+  guides(color = "none", alpha = "none")
+```
+
+```{r}
+plot_data <- D %>%
+  mutate(
+    date = mdy(date),
+    year = year(date),
+    day_of_year = yday(date)
+  ) %>%
+  arrange(date)
+
+current_year <- 2024
+
+ggplot(plot_data, aes(x = date, y = number)) +
+  geom_line(aes(color = "red")) +
+  labs(x="Date", y = "Passengers Screened", title="Record Air Travel", notes="hi") +
+  theme_minimal() +
+  guides(color = "none", alpha = "none")
+
+```
+
+## Final Chart
+
+```{r}
+plot_data <- D %>%
+  mutate(
+    date = mdy(date),
+    year = year(date),
+    day_of_year = yday(date)
+  ) %>%
+  arrange(date) %>%
+  mutate(
+    weekly_max = rollapplyr(number, width = 7, FUN = max, fill = NA, align = "right")
+  )
+
+current_year <- 2024
+
+ggplot(plot_data, aes(x = date, y = weekly_max)) +
+  geom_line(aes(color = "red")) +
+  labs(x = "Date", y = "Passengers Screened", title = "Record air travel in the U.S.",subtitle="Weekly maxium of passengers screened by the TSA") +
+  theme_minimal() +
+  guides(color = "none", alpha = "none")
+```
